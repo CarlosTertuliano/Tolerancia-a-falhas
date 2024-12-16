@@ -1,19 +1,18 @@
 package com.ft.store.domain;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
-@Table(name = "products") // nome da tabela no banco de dados
+@Entity
+@Table(name = "products")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     private int id;
 
+    @Column(name = "\"value\"", nullable = false)
     private double value;
 
+    @Column(nullable = false)
     private String name;
 
     public int getId() {
