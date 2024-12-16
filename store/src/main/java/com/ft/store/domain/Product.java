@@ -15,6 +15,11 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
+    public Product(String name, Double value) {
+        this.name = name;
+        this.value = value;
+    }
+
     public int getId() {
         return id;
     }
