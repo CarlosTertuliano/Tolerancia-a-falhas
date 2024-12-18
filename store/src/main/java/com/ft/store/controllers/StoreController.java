@@ -1,5 +1,9 @@
 package com.ft.store.controllers;
 
+import com.ft.store.fault.ErrorFailure;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -9,12 +13,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/sell")
 public class StoreController {
 
-    @PostMapping("")
-    public Integer sellProduct(@RequestParam Integer idProduct) {
+    @Autowired
+    private ErrorFailure errorFailure;
 
-        //to-do Verificar se vai falhar
+    @PostMapping("")
+    public ResponseEntity<Integer> sellProduct(@RequestParam Integer idProduct) {
+
+        if(errorFailure.shouldFail(0.1)) {
+            ResponseEntity.internalServerError().build();
+        }
 
         //to-do ver se tem um jeito melhor de fazer
-        return Math.round((float) Math.random());
+        return ResponseEntity.ok().body(Math.round((float) Math.random()));
     }
 }

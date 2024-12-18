@@ -1,6 +1,7 @@
 package com.ft.store.controllers;
 
 import com.ft.store.domain.Product;
+import com.ft.store.fault.OmissionFailure;
 import com.ft.store.service.ProductService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,15 +13,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
     private final ProductService productService;
+    private final OmissionFailure omissionFailure;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, OmissionFailure omissionFailure) {
         this.productService = productService;
+        this.omissionFailure = omissionFailure;
     }
 
     @GetMapping("")
-    public Product getProduct(@RequestParam int id) {
+    public Product getProduct(@RequestParam int id) throws InterruptedException {
 
-        //to-do Verificar se vai falhar
+        if(omissionFailure.shouldFail(0.2)){
+            omissionFailure.applyCrash();
+        }
 
         return productService.findProduct(id);
     }
