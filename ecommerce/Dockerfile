@@ -1,11 +1,14 @@
-# Use uma imagem base com o JDK
-FROM eclipse-temurin:17-jdk-alpine
+FROM maven:3.8-openjdk-17 AS build
 
-# Configura o diretório de trabalho
 WORKDIR /app
 
-# Copia o arquivo JAR para o container
-COPY target/ecommerce-0.0.1-SNAPSHOT.jar app.jar
+COPY pom.xml .
+COPY src ./src
 
-# Define o comando para iniciar a aplicação
-ENTRYPOINT ["java", "-jar", "app.jar"]
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jdk-alpine
+
+COPY --from=build /app/target/*.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "/app.jar"]
