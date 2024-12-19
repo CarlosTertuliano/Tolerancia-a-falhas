@@ -2,14 +2,25 @@ package com.ft.ecommerce.service;
 
 import com.ft.ecommerce.domain.BonusRequest;
 import com.ft.ecommerce.domain.Product;
+import com.ft.ecommerce.failed_requests_logger.FailedRequests;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class EcommerceService {
 
     private static final String URL = "http://localhost:";
+
+    private static final Logger logger = LoggerFactory.getLogger(EcommerceService.class);
+
+    @Autowired
+    private FailedRequests failedRequests;
+    private static Double lastValueResponseExchange ;
 
     private static int requestCount = 0;
 
@@ -40,12 +51,27 @@ public class EcommerceService {
 
         requestCount++;
 
-        Mono<Double> response = webClient.get()
-                .uri(URL + "808" + ((requestCount % 2) + 2) + "/exchange")
-                .retrieve()
-                .bodyToMono(Double.class);
+        try {
+            Mono<Double> response = webClient.get()
+                    .uri(URL + "808" + ((requestCount % 2) + 2) + "/exchange")
+                    .retrieve()
+                    .bodyToMono(Double.class)
+                    .doOnNext(value -> {
+                        // Atualiza a variável lastValueResponseExchange em caso de sucesso
+                        lastValueResponseExchange = value;
+                    });
 
-        return response.block();
+            // Bloqueia para obter o valor retornado (não recomendável em ambientes reativos, mas usado aqui para simplicidade)
+            return response.block();
+
+        } catch (WebClientResponseException e) {
+            // Lida com erros de resposta HTTP
+            System.err.println("Erro na requisição: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+            return lastValueResponseExchange; // Retorna o último valor conhecido
+        } catch (Exception e) {
+            System.err.println("Erro inesperado: " + e.getMessage());
+            return lastValueResponseExchange;
+        }
     }
 
     public Boolean applyBonusToUser(int idUser, Double originalValue) {
@@ -62,9 +88,10 @@ public class EcommerceService {
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
-
             return true;
         } catch (Exception e) {
+            logger.error("Falha ao processar bônus para o usuário {}: {}", idUser, e.getMessage());
+            failedRequests.add(bonusRequest);
             return false;
         }
     }
