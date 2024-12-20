@@ -21,11 +21,11 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: default
 
-  exchange:
+  exchange1:
     build:
       context: ./exchange
       dockerfile: Dockerfile
-    container_name: exchange
+    container_name: exchange0
     ports:
       - "8082:8080"
     environment:
@@ -35,7 +35,7 @@ services:
     build:
       context: ./exchange
       dockerfile: Dockerfile
-    container_name: exchange2
+    container_name: exchange1
     ports:
       - "8083:8080"
     environment:

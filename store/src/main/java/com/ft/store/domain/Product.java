@@ -20,6 +20,10 @@ public class Product {
         this.value = value;
     }
 
+    public Product() {
+
+    }
+
     public int getId() {
         return id;
     }

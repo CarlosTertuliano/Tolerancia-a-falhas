@@ -13,9 +13,6 @@ import org.slf4j.LoggerFactory;
 
 @Service
 public class EcommerceService {
-
-    private static final String URL = "http://localhost:";
-
     private static final Logger logger = LoggerFactory.getLogger(EcommerceService.class);
 
     @Autowired
@@ -28,18 +25,18 @@ public class EcommerceService {
         WebClient webClient = WebClient.create();
 
         Mono<Product> response = webClient.get()
-                .uri(URL + "8081" + "/product?id=" + idProduct)
+                .uri("http://store:8080/product?id=" + idProduct)
                 .retrieve()
                 .bodyToMono(Product.class);
 
         return response.block();
     }
 
-    public Integer sellProduct(){
+    public Integer sellProduct(int idProduct){
         WebClient webClient = WebClient.create();
 
-        Mono<Integer> response = webClient.get()
-                .uri(URL + "8081" + "/sell")
+        Mono<Integer> response = webClient.post()
+                .uri("http://store:8080/sell?id=" + idProduct)
                 .retrieve()
                 .bodyToMono(Integer.class);
 
@@ -53,7 +50,7 @@ public class EcommerceService {
 
         try {
             Mono<Double> response = webClient.get()
-                    .uri(URL + "808" + ((requestCount % 2) + 2) + "/exchange")
+                    .uri("http://exchange" + (requestCount % 2) + ":8080/exchange")
                     .retrieve()
                     .bodyToMono(Double.class)
                     .doOnNext(value -> {
@@ -76,7 +73,7 @@ public class EcommerceService {
 
     public Boolean applyBonusToUser(int idUser, Double originalValue) {
         WebClient webClient = WebClient.builder()
-                .baseUrl(URL + "8084")
+                .baseUrl("http://fidelity:8080")
                 .build();
 
         BonusRequest bonusRequest = new BonusRequest(idUser, originalValue.intValue());
