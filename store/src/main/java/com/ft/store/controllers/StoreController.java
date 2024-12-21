@@ -17,7 +17,7 @@ public class StoreController {
     private ErrorFailure errorFailure;
 
     @PostMapping("")
-    public ResponseEntity<Integer> sellProduct(@RequestParam Integer idProduct) {
+    public ResponseEntity<Integer> sellProduct(@RequestParam Integer id) {
 
         if(errorFailure.shouldFail(0.1)) {
             ResponseEntity.internalServerError().build();
