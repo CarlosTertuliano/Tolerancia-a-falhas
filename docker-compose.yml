@@ -21,7 +21,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: default
 
-  exchange1:
+  exchange0:
     build:
       context: ./exchange
       dockerfile: Dockerfile
@@ -31,7 +31,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: default
 
-  exchange2:
+  exchange1:
     build:
       context: ./exchange
       dockerfile: Dockerfile

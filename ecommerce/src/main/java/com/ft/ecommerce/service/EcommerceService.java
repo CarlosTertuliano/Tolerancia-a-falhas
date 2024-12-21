@@ -22,27 +22,41 @@ public class EcommerceService {
     @Autowired
     private FailedRequests failedRequests;
 
-    private static Double lastValueResponseExchange ;
+    private static Double lastValueResponseExchange;
 
     private static int requestCount = 0;
+
+    // Atributo para ativar/desativar a tolerância a falhas
+    private boolean ft;
+
+    // Construtor para inicializar o valor de ft
+    public EcommerceService(boolean ft) {
+        this.ft = ft;
+    }
+
+    public EcommerceService() {
+    }
 
     public Product getProduct(int idProduct) {
         WebClient webClient = WebClient.create();
 
         try {
-            // WebClient com Retry: Tenta novamente até 3 vezes com um intervalo de 2 segundos
             Mono<Product> response = webClient.get()
                     .uri("http://store:8080/product?id=" + idProduct)
                     .retrieve()
-                    .bodyToMono(Product.class)
-                    .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))); // Retry até 3 vezes com 2 segundos de intervalo
+                    .bodyToMono(Product.class);
 
-            // Circuit Breaker: Verifica se o circuito está aberto antes de fazer a requisição
-            return Helper.CircuitBreaker.run(response::block); // Retorna o resultado ou falha se o circuito estiver aberto
+            if (ft) {
+                // Tolerância a falhas ativada: retry e circuit breaker
+                response = response.retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))); // Retry até 3 vezes
+                return Helper.CircuitBreaker.run(response::block);
+            } else {
+                // Sem tolerância a falhas
+                return response.block();
+            }
         } catch (Exception e) {
-            // Se a requisição falhar, retorna um valor padrão ou null
             System.err.println("Erro ao obter produto: " + e.getMessage());
-            return null; // Pode ser alterado para retornar um Product com valores default
+            return null; // Valor padrão
         }
     }
 
@@ -50,19 +64,22 @@ public class EcommerceService {
         WebClient webClient = WebClient.create();
 
         try {
-            // WebClient com Retry: Tenta novamente até 3 vezes com um intervalo de 2 segundos
             Mono<Integer> response = webClient.post()
                     .uri("http://store:8080/sell?id=" + idProduct)
                     .retrieve()
-                    .bodyToMono(Integer.class)
-                    .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))); // Retry até 3 vezes com 2 segundos de intervalo
+                    .bodyToMono(Integer.class);
 
-            // Circuit Breaker: Verifica o estado do circuito antes de tentar a requisição
-            return Helper.CircuitBreaker.run(response::block); // Retorna a resposta ou falha se o circuito estiver aberto
+            if (ft) {
+                // Tolerância a falhas ativada
+                response = response.retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2)));
+                return Helper.CircuitBreaker.run(response::block);
+            } else {
+                // Sem tolerância a falhas
+                return response.block();
+            }
         } catch (Exception e) {
-            // Se falhar, retorna um valor de fallback (por exemplo, -1)
             System.err.println("Erro ao vender produto: " + e.getMessage());
-            return -1; // Retorno de fallback indicando falha
+            return -1; // Valor de fallback
         }
     }
 
@@ -75,22 +92,26 @@ public class EcommerceService {
             Mono<Double> response = webClient.get()
                     .uri("http://exchange" + (requestCount % 2) + ":8080/exchange")
                     .retrieve()
-                    .bodyToMono(Double.class)
-                    .doOnNext(value -> {
-                        // Atualiza a variável lastValueResponseExchange em caso de sucesso
-                        lastValueResponseExchange = value;
-                    });
+                    .bodyToMono(Double.class);
 
-            // Bloqueia para obter o valor retornado (não recomendável em ambientes reativos, mas usado aqui para simplicidade)
+            if (ft) {
+                response = response.doOnNext(value -> lastValueResponseExchange = value);
+            }
+
+            requestCount = requestCount % 2;
             return response.block();
-
         } catch (WebClientResponseException e) {
-            // Lida com erros de resposta HTTP
             System.err.println("Erro na requisição: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-            return lastValueResponseExchange; // Retorna o último valor conhecido
+            if (ft) {
+                return lastValueResponseExchange; // Fallback
+            }
+            return 0.0;
         } catch (Exception e) {
             System.err.println("Erro inesperado: " + e.getMessage());
-            return lastValueResponseExchange;
+            if (ft) {
+                return lastValueResponseExchange; // Fallback
+            }
+            return 0.0;
         }
     }
 
@@ -102,18 +123,30 @@ public class EcommerceService {
         BonusRequest bonusRequest = new BonusRequest(idUser, originalValue.intValue());
 
         try {
-            String response = webClient.post()
+            Mono<String> response = webClient.post()
                     .uri("/bonus")
                     .bodyValue(bonusRequest)
                     .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
+                    .bodyToMono(String.class);
+
+            response.block();
             return true;
         } catch (Exception e) {
             logger.error("Falha ao processar bônus para o usuário {}: {}", idUser, e.getMessage());
-            failedRequests.add(bonusRequest);
+            if (ft) {
+                failedRequests.add(bonusRequest);
+            }
             return false;
         }
     }
 
+    // Getter e Setter para o atributo ft
+    public boolean isFt() {
+        return ft;
+    }
+
+    public void setFt(boolean ft) {
+        this.ft = ft;
+    }
 }
+

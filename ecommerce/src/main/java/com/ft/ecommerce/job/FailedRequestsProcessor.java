@@ -18,10 +18,12 @@ public class FailedRequestsProcessor {
 
     @Scheduled(fixedRate = 10000) // Executa a cada 10 segundos
     public void processFailedRequests() {
-        for (BonusRequest request : failedRequestsStore.getAndClear()) {
-            boolean success = ecommerceService.applyBonusToUser(request.getIdUsuario(), (double) request.getValue());
-            if (!success) {
-                failedRequestsStore.add(request); // Re-adiciona se falhar novamente
+        if(ecommerceService.isFt()) {
+            for (BonusRequest request : failedRequestsStore.getAndClear()) {
+                boolean success = ecommerceService.applyBonusToUser(request.getIdUsuario(), (double) request.getValue());
+                if (!success) {
+                    failedRequestsStore.add(request); // Re-adiciona se falhar novamente
+                }
             }
         }
     }

@@ -21,6 +21,8 @@ public class EcommerceController {
     public void buy(@RequestBody BuyRequest request) {
         //to-do adicionar verificação de falha.
 
+        ecommerceService.setFt(request.isFt());
+
         // chamada da API (/product)
         Product product = ecommerceService.getProduct(request.getIdProduct());
         Double originalValue = product.getValue();
