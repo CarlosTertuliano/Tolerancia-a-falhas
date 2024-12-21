@@ -3,6 +3,7 @@ package com.ft.ecommerce.service;
 import com.ft.ecommerce.domain.BonusRequest;
 import com.ft.ecommerce.domain.Product;
 import com.ft.ecommerce.failed_requests_logger.FailedRequests;
+import com.ft.ecommerce.helpers.RetryHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -21,15 +22,18 @@ public class EcommerceService {
 
     private static int requestCount = 0;
 
-    public Product getProduct(int idProduct){
-        WebClient webClient = WebClient.create();
+      public Product getProduct(int idProduct) {
+        return RetryHelper.executeWithRetry(() ->
+        {
+            WebClient webClient = WebClient.create();
 
-        Mono<Product> response = webClient.get()
-                .uri("http://store:8080/product?id=" + idProduct)
-                .retrieve()
-                .bodyToMono(Product.class);
+            Mono<Product> response = webClient.get()
+                    .uri("http://store:8080/product?id=" + idProduct)
+                    .retrieve()
+                    .bodyToMono(Product.class);
 
-        return response.block();
+            return response.block();
+        }, 3, 2000);
     }
 
     public Integer sellProduct(int idProduct){

@@ -30,7 +30,7 @@ public class EcommerceController {
         product.setValue(product.getValue() * exchange);
 
         // chamada da API (/sell)
-        Integer sellId = ecommerceService.sellProduct();
+        Integer sellId = ecommerceService.sellProduct(request.getIdProduct());
 
         // chamada da API (/bonus)
         boolean registeredBonus = ecommerceService.applyBonusToUser(request.getIdUsuario(), originalValue);
