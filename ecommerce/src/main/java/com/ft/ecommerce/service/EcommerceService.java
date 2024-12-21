@@ -56,6 +56,9 @@ public class EcommerceService {
             }
         } catch (Exception e) {
             System.err.println("Erro ao obter produto: " + e.getMessage());
+            if (ft) {
+                Helper.CircuitBreaker.resetAfter(Duration.ofSeconds(5));
+            }
             return null; // Valor padrão
         }
     }
@@ -79,6 +82,9 @@ public class EcommerceService {
             }
         } catch (Exception e) {
             System.err.println("Erro ao vender produto: " + e.getMessage());
+            if (ft) {
+                Helper.CircuitBreaker.resetAfter(Duration.ofSeconds(5));
+            }
             return -1; // Valor de fallback
         }
     }
