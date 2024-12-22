@@ -16,7 +16,7 @@ O projeto é composto pelos seguintes microserviços:
 - **Spring Boot**
 - **Docker** e **Docker Compose**
 - **Maven**
-- Banco de dados integrado ao microsserviço `Store` via JPA/Hibernate
+- Banco de dados integrado ao microsserviço `Store` e ao `Fidelity` via JPA/Hibernate
 
 ## Requisitos
 Antes de iniciar, certifique-se de ter:

@@ -29,7 +29,6 @@ public class EcommerceService {
 
     private static int requestCount = 0;
 
-    // Atributo para ativar/desativar a tolerância a falhas
     private static boolean ft;
 
     public EcommerceService(WebClient webClient) {
@@ -45,11 +44,9 @@ public class EcommerceService {
                     .bodyToMono(Product.class);
 
             if (ft) {
-                // Tolerância a falhas ativada: retry e circuit breaker
                 response = response.retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))); // Retry até 3 vezes
                 return Helper.CircuitBreaker.run(response::block);
             } else {
-                // Sem tolerância a falhas
                 return response.block();
             }
         } catch (Exception e) {
@@ -57,7 +54,7 @@ public class EcommerceService {
             if (ft) {
                 Helper.CircuitBreaker.resetAfter(Duration.ofSeconds(5));
             }
-            return null; // Valor padrão
+            return null;
         }
     }
 
@@ -70,11 +67,9 @@ public class EcommerceService {
                     .bodyToMono(Integer.class);
 
             if (ft) {
-                // Tolerância a falhas ativada
                 response = response.retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2)));
                 return Helper.CircuitBreaker.run(response::block);
             } else {
-                // Sem tolerância a falhas
                 return response.block();
             }
         } catch (Exception e) {
@@ -82,7 +77,7 @@ public class EcommerceService {
             if (ft) {
                 Helper.CircuitBreaker.resetAfter(Duration.ofSeconds(5));
             }
-            return -1; // Valor de fallback
+            return -1;
         }
     }
 
@@ -97,6 +92,8 @@ public class EcommerceService {
 
             if (ft) {
                 response = response.doOnNext(value -> lastValueResponseExchange = value);
+            } else {
+                lastValueResponseExchange = 0.0;
             }
 
             requestCount = requestCount % 2;
@@ -104,13 +101,13 @@ public class EcommerceService {
         } catch (WebClientResponseException e) {
             System.err.println("Erro na requisição: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
             if (ft) {
-                return lastValueResponseExchange; // Fallback
+                return lastValueResponseExchange;
             }
             return 0.0;
         } catch (Exception e) {
             System.err.println("Erro inesperado: " + e.getMessage());
             if (ft) {
-                return lastValueResponseExchange; // Fallback
+                return lastValueResponseExchange;
             }
             return 0.0;
         }
@@ -139,7 +136,6 @@ public class EcommerceService {
 
     }
 
-    // Getter e Setter para o atributo ft
     public boolean isFt() {
         return ft;
     }

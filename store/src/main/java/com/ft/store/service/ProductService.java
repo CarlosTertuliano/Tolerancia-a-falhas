@@ -10,8 +10,6 @@ import java.util.Optional;
 @Service
 public class ProductService {
 
-    //to-do criar Lista de produtos para mockar os dados.
-
     @Autowired
     ProductRepository productRepository;
     public Product findProduct(int id) {

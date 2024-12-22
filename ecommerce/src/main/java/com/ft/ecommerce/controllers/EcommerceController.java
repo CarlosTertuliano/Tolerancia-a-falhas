@@ -7,21 +7,16 @@ import io.netty.handler.timeout.ReadTimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/buy")
 public class EcommerceController {
-
-    static final private String URL = "http://localhost:8080";
 
     @Autowired
     private EcommerceService ecommerceService;
 
     @PostMapping("")
     public ResponseEntity<String> buy(@RequestBody BuyRequest request) {
-        //to-do adicionar verificação de falha.
 
         ecommerceService.setFt(request.isFt());
 
@@ -62,7 +57,7 @@ public class EcommerceController {
 
             return ResponseEntity.internalServerError().body("Erro ao buscar a taxa de conversão! Tente novamente mais tarde!");
         } else {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.internalServerError().body("Erro ao encontrar o produto! Tente novamente mais tarde!");
         }
     }
 

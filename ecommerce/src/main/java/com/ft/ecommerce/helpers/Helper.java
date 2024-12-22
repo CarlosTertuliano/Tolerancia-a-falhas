@@ -10,7 +10,6 @@ public class Helper {
     public static class CircuitBreaker {
         private static boolean open = false;
 
-        // Método estático para que a classe possa ser usada sem instância
         public static synchronized <T> T run(Supplier<T> action) {
             if (open) {
                 throw new IllegalStateException("Circuit breaker está aberto!");
@@ -19,18 +18,16 @@ public class Helper {
             try {
                 return action.get();
             } catch (Exception e) {
-                open = true; // Abrir o circuito após falha
+                open = true;
                 System.err.println("Circuit breaker ativado!");
                 throw e;
             }
         }
 
-        // Método estático para resetar o circuito
         public static synchronized void reset() {
-            open = false; // Resetar o circuito
+            open = false;
         }
 
-        // Método estático para resetar o circuito após um tempo
         public static synchronized void resetAfter(Duration duration) {
             new Timer().schedule(new TimerTask() {
                 @Override

@@ -16,10 +16,10 @@ public class WebClientConfig {
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
         HttpClient httpClient = HttpClient.create()
-                .responseTimeout(Duration.ofSeconds(1)) // Timeout de resposta
+                .responseTimeout(Duration.ofSeconds(1))
                 .doOnConnected(conn ->
                         conn.addHandlerLast(new ReadTimeoutHandler(1))
-                                .addHandlerLast(new WriteTimeoutHandler(1))); // Timeout de leitura/escrita
+                                .addHandlerLast(new WriteTimeoutHandler(1)));
 
         return builder
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
