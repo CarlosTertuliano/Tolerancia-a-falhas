@@ -1,15 +1,28 @@
 package com.ft.ecommerce.configs;
 
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+
+import java.time.Duration;
 
 @Configuration
 public class WebClientConfig {
 
-    //to-do descobrir como usar webClient para usar apenas um em todo o projeto
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
-        return builder.baseUrl("http://localhost:8080").build();
+        HttpClient httpClient = HttpClient.create()
+                .responseTimeout(Duration.ofSeconds(1)) // Timeout de resposta
+                .doOnConnected(conn ->
+                        conn.addHandlerLast(new ReadTimeoutHandler(1))
+                                .addHandlerLast(new WriteTimeoutHandler(1))); // Timeout de leitura/escrita
+
+        return builder
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .build();
     }
 }

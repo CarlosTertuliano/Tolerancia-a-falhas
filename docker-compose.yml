@@ -30,6 +30,7 @@ services:
       - "8082:8080"
     environment:
       SPRING_PROFILES_ACTIVE: default
+    restart: always
 
   exchange1:
     build:
@@ -40,6 +41,7 @@ services:
       - "8083:8080"
     environment:
       SPRING_PROFILES_ACTIVE: default
+    restart: always
 
   fidelity:
     build:

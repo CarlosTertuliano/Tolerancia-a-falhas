@@ -24,6 +24,7 @@ public class FidelityController {
 
         if(timeFailure.shouldFail(0.1)){
             timeFailure.applyFailure();
+            return ResponseEntity.internalServerError().body("");
         }
 
         fidelityService.saveBonus(bonusRequest);

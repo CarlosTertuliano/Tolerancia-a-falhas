@@ -20,10 +20,11 @@ public class StoreController {
     public ResponseEntity<Integer> sellProduct(@RequestParam Integer id) {
 
         if(errorFailure.shouldFail(0.1)) {
-            ResponseEntity.internalServerError().build();
+            System.out.println("\nStore failed! - SERVER FAILURE - internal server error \n");
+            return ResponseEntity.internalServerError().build();
         }
 
-        //to-do ver se tem um jeito melhor de fazer
+        System.out.println("\nVenda realizada com sucesso!\n");
         return ResponseEntity.ok().body(Math.round((float) Math.random()));
     }
 }

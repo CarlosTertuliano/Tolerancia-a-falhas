@@ -17,9 +17,11 @@ public class ExchangeController {
     public Double getExchange() {
 
         if(crashFailure.shouldFail(0.1)){
+            System.out.println("\nExchange failed! - CRASH FAILURE - desligando exchange \n");
             crashFailure.applyCrash();
         }
 
+        System.out.println("\nExchange funcionou\n");
         return Math.random();
     }
 }

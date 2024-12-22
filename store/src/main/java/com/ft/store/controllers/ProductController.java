@@ -24,9 +24,11 @@ public class ProductController {
     public Product getProduct(@RequestParam int id) throws InterruptedException {
 
         if(omissionFailure.shouldFail(0.2)){
+            System.out.println("\nStore failed! - OMISSION FAILURE - sleep 10s \n");
             omissionFailure.applyCrash();
         }
 
+        System.out.println("\nBuscando produto com id: " + id + "\n");
         return productService.findProduct(id);
     }
 }

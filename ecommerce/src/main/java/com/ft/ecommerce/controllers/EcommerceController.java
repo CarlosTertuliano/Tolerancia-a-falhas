@@ -3,7 +3,9 @@ package com.ft.ecommerce.controllers;
 import com.ft.ecommerce.domain.BuyRequest;
 import com.ft.ecommerce.domain.Product;
 import com.ft.ecommerce.service.EcommerceService;
+import io.netty.handler.timeout.ReadTimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -18,25 +20,50 @@ public class EcommerceController {
     private EcommerceService ecommerceService;
 
     @PostMapping("")
-    public void buy(@RequestBody BuyRequest request) {
+    public ResponseEntity<String> buy(@RequestBody BuyRequest request) {
         //to-do adicionar verificação de falha.
 
         ecommerceService.setFt(request.isFt());
 
         // chamada da API (/product)
         Product product = ecommerceService.getProduct(request.getIdProduct());
-        Double originalValue = product.getValue();
 
-        // chamada da API (/exchange)
-        Double exchange = ecommerceService.getExchange();
-        product.setValue(product.getValue() * exchange);
+        if(product != null) {
+            Double originalValue = product.getValue();
 
-        // chamada da API (/sell)
-        Integer sellId = ecommerceService.sellProduct(request.getIdProduct());
+            // chamada da API (/exchange)
+            Double exchange = ecommerceService.getExchange();
+            System.out.println("\n Taxa de conversão: " + exchange);
 
-        // chamada da API (/bonus)
-        boolean registeredBonus = ecommerceService.applyBonusToUser(request.getIdUsuario(), originalValue);
 
+            if(exchange != null && exchange != 0.0) {
+                product.setValue(product.getValue() * exchange);
+                System.out.println("\n Valor original: " + originalValue + "\nNovo valor do produto: " + product.getValue() + "\n");
+
+                // chamada da API (/sell)
+                Integer sellId = ecommerceService.sellProduct(request.getIdProduct());
+                System.out.println("\nID da venda: " + sellId + "\n");
+
+                if(sellId >= 0) {
+                    // chamada da API (/bonus)
+
+                    try {
+                        boolean registeredBonus = ecommerceService.applyBonusToUser(request.getIdUsuario(), originalValue);
+                    }
+                    catch (ReadTimeoutException e) {
+                        System.out.println("\nProcessamento do fidelity falhou!\n");
+                    }
+
+                    return ResponseEntity.ok("Compra realiazada com sucesso ID da venda: " +sellId + " Valor final: " + product.getValue());
+                }
+
+                return ResponseEntity.internalServerError().body("Erro ao realizar compra! Tente novamente mais tarde!");
+            }
+
+            return ResponseEntity.internalServerError().body("Erro ao buscar a taxa de conversão! Tente novamente mais tarde!");
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }

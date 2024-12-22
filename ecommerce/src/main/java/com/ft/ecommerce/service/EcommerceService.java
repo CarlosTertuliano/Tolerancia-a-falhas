@@ -4,6 +4,7 @@ import com.ft.ecommerce.domain.BonusRequest;
 import com.ft.ecommerce.domain.Product;
 import com.ft.ecommerce.failed_requests_logger.FailedRequests;
 import com.ft.ecommerce.helpers.Helper;
+import io.netty.handler.timeout.ReadTimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -22,23 +23,20 @@ public class EcommerceService {
     @Autowired
     private FailedRequests failedRequests;
 
+    private final WebClient webClient;
+
     private static Double lastValueResponseExchange;
 
     private static int requestCount = 0;
 
     // Atributo para ativar/desativar a tolerância a falhas
-    private boolean ft;
+    private static boolean ft;
 
-    // Construtor para inicializar o valor de ft
-    public EcommerceService(boolean ft) {
-        this.ft = ft;
-    }
-
-    public EcommerceService() {
+    public EcommerceService(WebClient webClient) {
+        this.webClient = webClient;
     }
 
     public Product getProduct(int idProduct) {
-        WebClient webClient = WebClient.create();
 
         try {
             Mono<Product> response = webClient.get()
@@ -64,7 +62,6 @@ public class EcommerceService {
     }
 
     public Integer sellProduct(int idProduct) {
-        WebClient webClient = WebClient.create();
 
         try {
             Mono<Integer> response = webClient.post()
@@ -90,8 +87,6 @@ public class EcommerceService {
     }
 
     public Double getExchange() {
-        WebClient webClient = WebClient.create();
-
         requestCount++;
 
         try {
@@ -121,29 +116,27 @@ public class EcommerceService {
         }
     }
 
-    public Boolean applyBonusToUser(int idUser, Double originalValue) {
-        WebClient webClient = WebClient.builder()
-                .baseUrl("http://fidelity:8080")
-                .build();
-
+    public Boolean applyBonusToUser(int idUser, Double originalValue) throws ReadTimeoutException {
         BonusRequest bonusRequest = new BonusRequest(idUser, originalValue.intValue());
 
-        try {
             Mono<String> response = webClient.post()
-                    .uri("/bonus")
+                    .uri("http://fidelity:8080/bonus")
                     .bodyValue(bonusRequest)
                     .retrieve()
-                    .bodyToMono(String.class);
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(1))
+                    .doOnError(e -> {
+                        logger.error("Erro ao processar bônus para o usuário {}: {}", idUser, "");
+                        if (ft) {
+                            failedRequests.add(bonusRequest);
+                        }
 
-            response.block();
+                        throw new ReadTimeoutException();
+                    });
+
+            System.out.println(response.block());
             return true;
-        } catch (Exception e) {
-            logger.error("Falha ao processar bônus para o usuário {}: {}", idUser, e.getMessage());
-            if (ft) {
-                failedRequests.add(bonusRequest);
-            }
-            return false;
-        }
+
     }
 
     // Getter e Setter para o atributo ft
