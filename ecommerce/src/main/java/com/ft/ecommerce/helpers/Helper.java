@@ -26,6 +26,7 @@ public class Helper {
 
         public static synchronized void reset() {
             open = false;
+            System.out.println("========================================= Circuit breaker fechou! =========================================");
         }
 
         public static synchronized void resetAfter(Duration duration) {
